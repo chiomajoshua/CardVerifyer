@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using CardVerifyer.Data.Persistence;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
@@ -36,16 +36,22 @@ namespace CardVerifyer
             .AddResponseCaching()
             .AddLogging();
 
-            services.AddApiVersioning(options =>
-            {
-                options.DefaultApiVersion = new ApiVersion(1, 0);
-                options.ApiVersionReader
-                    = new MediaTypeApiVersionReader();
-                options.AssumeDefaultVersionWhenUnspecified = true;
-                options.ReportApiVersions = true;
-                options.ApiVersionSelector
-                     = new CurrentImplementationApiVersionSelector(options);
-            });
+            services.AddOpenIddict()
+                .AddCore(options =>
+                {
+                    options.UseEntityFrameworkCore()
+                           .UseDbContext<CardVerifyerDbContext>();
+                })
+                .AddServer(options =>
+                {                  
+                    options.UseMvc();
+                    options.EnableTokenEndpoint("/auth/token");
+                    options.AllowPasswordFlow();
+                    options.AcceptAnonymousClients();
+                })
+                .AddValidation();
+
+
             services.AddMvc(options =>
             {
                 options.CacheProfiles.Add("default", new CacheProfile

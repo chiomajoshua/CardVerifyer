@@ -1,14 +1,15 @@
 ﻿using CardVerifyer.Contract;
 using CardVerifyer.Data.DataTransferObjects;
-using CardVerifyer.Data.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using OpenIddict.Validation;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace CardVerifyer.Controllers
 {
+    [Authorize(AuthenticationSchemes = OpenIddictValidationDefaults.AuthenticationScheme)]
     [Route("api/[controller]/[action]")]
     [ApiController]
     public class CardVerificationController : ControllerBase
@@ -27,11 +28,11 @@ namespace CardVerifyer.Controllers
         [HttpPost(Name = nameof(Validator))]
         [ProducesResponseType(200)]
         [ResponseCache(Duration = 30)]
-        public async Task<IActionResult> Validator(IINRequestModel iinRequestModel)
+        public async Task<IActionResult> Validator(string iinRequest)
         {
             if(ModelState.IsValid)
             {
-                var result = await _cardValidationService.ValidateCardInformation(iinRequestModel.IIN.Trim());
+                var result = await _cardValidationService.ValidateCardInformation(iinRequest.Trim());
                 if (result != null)
                 {
                     result.Href = Url.Link(nameof(CardVerificationController.Validator), null);
@@ -46,6 +47,5 @@ namespace CardVerifyer.Controllers
             }
             return Ok(_responseDataDto);
         }
-
     }
 }
